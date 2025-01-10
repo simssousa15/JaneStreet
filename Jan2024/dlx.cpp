@@ -54,18 +54,54 @@ Node generate_list(vector<vector<bool>>grid){
     root.col_id = 0;
     root.left = &root;
 
-    vector<Node> last_of_
-    Node last_col = root;
-    for(int i=0; i<grid.size(); i++){
+    // initialize col nodes
+    vector<Node*> last_of_col;
+    Node* last_col = &root;
+    for(int i=0; i<grid[0].size(); i++){
         Node col;
         col.col_id = i+1;
         // right
         col.right = &root;
         root.left = &col;
         // left
-        col.left = &last_col;
-        last_col.right = &col;
-        last_col = col;
+        col.left = last_col;
+        last_col->right = &col;
+        last_col = &col;
+        //up
+        col.up = &col;
+        //down
+        col.down = &col;
+
+        // store end of col
+        last_of_col.push_back(&col);
+    }
+
+    //filling the grid
+    for(int i=0; i<grid.size(); i++){
+        Node* last_of_row = nullptr;
+        for(int j=0; j<grid[0].size(); j++){
+            if(grid[i][j]){
+                Node tmp;
+                //horizontal
+                if(last_of_row){
+                    tmp.left = last_of_row;
+                    tmp.right = last_of_row->right;
+                    last_of_row->right = &tmp;
+                    last_of_row = &tmp;
+                }else{
+                    tmp.left = &tmp;
+                    tmp.right = &tmp;
+                    last_of_row = &tmp;
+                }
+                last_of_row = &tmp;
+
+                //vertical
+                tmp.up = last_of_col[j];
+                tmp.down = last_of_col[j]->down;
+                last_of_col[j]->down = &tmp;
+                last_of_col[j] = &tmp;
+            }
+        }
     }
 
 
@@ -121,6 +157,8 @@ int main(){
     */
 
     auto l = generate_list(grid);
+
+    // search
     
     
     return 0;
