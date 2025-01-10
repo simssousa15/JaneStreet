@@ -9,6 +9,12 @@
 
 using namespace std;
 
+/*
+    Useful links:
+    - https://www.ocf.berkeley.edu/~jchu/publicportal/sudoku/sudoku.paper.html
+    - https://code.google.com/archive/p/narorumo/wikis/SudokuDLX.wiki
+    - https://shivankaul.com/blog/sudoku
+*/
 // 1. Find all the solutions to the sudoku (1-9 digits)
 /*
 Startign Sudoku
