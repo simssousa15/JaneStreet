@@ -43,6 +43,8 @@ Startign Sudoku
 struct Node
 {
     int col_id = -1;
+    int size = -1;
+    Node* col = nullptr;
     Node* up = nullptr;
     Node* down = nullptr;
     Node* left = nullptr;
@@ -60,6 +62,8 @@ Node generate_list(vector<vector<bool>>grid){
     for(int i=0; i<grid[0].size(); i++){
         Node col;
         col.col_id = i+1;
+        col.size = 0;
+        col.col = &col;
         // right
         col.right = &root;
         root.left = &col;
@@ -76,6 +80,7 @@ Node generate_list(vector<vector<bool>>grid){
         last_of_col.push_back(&col);
     }
 
+    auto col_nodes = last_of_col;
     //filling the grid
     for(int i=0; i<grid.size(); i++){
         Node* last_of_row = nullptr;
@@ -100,6 +105,10 @@ Node generate_list(vector<vector<bool>>grid){
                 tmp.down = last_of_col[j]->down;
                 last_of_col[j]->down = &tmp;
                 last_of_col[j] = &tmp;
+
+                tmp.col = col_nodes[j];
+                col_nodes[j]->size += 1;
+
             }
         }
     }
@@ -108,6 +117,70 @@ Node generate_list(vector<vector<bool>>grid){
     return root;
 }
 
+void cover( Node* n ){
+    Node* c = n->col;
+    c->right->left = c->left;
+    c->left->right = c->right;
+
+    for( Node* row = c->down; row != c; row = row->down ){
+        for( Node* rightNode = row->right; rightNode != row; rightNode = rightNode->right ){
+            rightNode->up->down = rightNode->down;
+            rightNode->down->up = rightNode->up; 
+        }
+    }
+}
+
+void uncover( Node* n ){
+    Node* c = n->col;
+    for( Node* row = c->up; row != c; row = row->up){
+        for( Node* leftNode = row->left; leftNode != row; leftNode = leftNode->right){
+            leftNode->up->down = leftNode->down;
+            leftNode->down->up = leftNode->up;
+        }
+    }
+
+    c->right->left = c->left;
+    c->left->right = c->right;
+}
+
+Node* getSmallest( Node* h){
+    Node* c = h->right;
+    int min_size = c->size;
+    Node* min_col = c;
+    
+    while(c->right != h){
+        c = c->right;
+        if(c->size < min_size){
+            min_size = c->size;
+            min_col = c;
+        }
+    }
+
+    return min_col;
+}
+
+// not done
+search(int k, Node* h){
+    if(h->right == h){
+        return;
+    }else{
+        Node* c = getSmallest(h);
+        cover(c);
+
+        for( Node* row = c->down; row != c; row = row->down){
+            for( Node* rightNode = row->right; rightNode != row; rightNode = rightNode->right){
+                cover(rightNode->col);
+            }
+
+            search(k+1, h);
+            c = row->col;
+            
+            for( Node* leftNode = row->left; leftNode != row; leftNode = leftNode->left ){
+                uncover(leftNode->col);
+            }
+        }
+    }
+}
 int main(){
 
     // Each Cols represents a constraint
