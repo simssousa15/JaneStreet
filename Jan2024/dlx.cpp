@@ -49,35 +49,41 @@ struct Node
     Node* down = nullptr;
     Node* left = nullptr;
     Node* right = nullptr;
+
+    int i, j, val;
 };
 
-Node generate_list(vector<vector<bool>>grid){
-    Node root;
-    root.col_id = 0;
-    root.left = &root;
+vector<Node*> solution(N*N, nullptr);
+int sol_ctr = 0;
+
+
+Node* generate_list(vector<vector<bool>>grid, vector<vector<int>> easy){
+    Node* root = new Node();
+    root->col_id = 0;
+    root->left = root;
 
     // initialize col nodes
     vector<Node*> last_of_col;
-    Node* last_col = &root;
+    Node* last_col = root;
     for(int i=0; i<grid[0].size(); i++){
-        Node col;
-        col.col_id = i+1;
-        col.size = 0;
-        col.col = &col;
+        Node* col = new Node();
+        col->col_id = i+1;
+        col->size = 0;
+        col->col = col;
         // right
-        col.right = &root;
-        root.left = &col;
+        col->right = root;
+        root->left = col;
         // left
-        col.left = last_col;
-        last_col->right = &col;
-        last_col = &col;
+        col->left = last_col;
+        last_col->right = col;
+        last_col = col;
         //up
-        col.up = &col;
+        col->up = col;
         //down
-        col.down = &col;
+        col->down = col;
 
         // store end of col
-        last_of_col.push_back(&col);
+        last_of_col.push_back(col);
     }
 
     auto col_nodes = last_of_col;
@@ -86,27 +92,30 @@ Node generate_list(vector<vector<bool>>grid){
         Node* last_of_row = nullptr;
         for(int j=0; j<grid[0].size(); j++){
             if(grid[i][j]){
-                Node tmp;
+                Node* tmp = new Node();
+                tmp->i = easy[i][0];
+                tmp->j = easy[i][1];
+                tmp->val = easy[i][2];
                 //horizontal
                 if(last_of_row){
-                    tmp.left = last_of_row;
-                    tmp.right = last_of_row->right;
-                    last_of_row->right = &tmp;
-                    last_of_row = &tmp;
+                    tmp->left = last_of_row;
+                    tmp->right = last_of_row->right;
+                    tmp->left->right = tmp;
+                    tmp->right->left = tmp;
                 }else{
-                    tmp.left = &tmp;
-                    tmp.right = &tmp;
-                    last_of_row = &tmp;
+                    tmp->left = tmp;
+                    tmp->right = tmp;
                 }
-                last_of_row = &tmp;
+                last_of_row = tmp;
 
                 //vertical
-                tmp.up = last_of_col[j];
-                tmp.down = last_of_col[j]->down;
-                last_of_col[j]->down = &tmp;
-                last_of_col[j] = &tmp;
+                tmp->up = last_of_col[j];
+                tmp->down = last_of_col[j]->down;
+                tmp->up->down = tmp;
+                tmp->down->up = tmp;
+                last_of_col[j] = tmp;
 
-                tmp.col = col_nodes[j];
+                tmp->col = col_nodes[j];
                 col_nodes[j]->size += 1;
 
             }
@@ -117,15 +126,41 @@ Node generate_list(vector<vector<bool>>grid){
     return root;
 }
 
+void list_check(Node* h){
+    cout << "start list check..." << endl;
+    for(Node* c = h->right; c != h; c = c->right){
+        for(Node* r = c->down; r != c; r = r->down){
+            int ctr = 1;
+            for(Node* n = r->right; n != r; n = n->right){
+                ctr++; 
+            }
+            if(ctr != 4){ cout << "row.size() != 4" << endl; }
+        }
+    }
+    cout << "right down ok" << endl;
+    for(Node* c = h->left; c != h; c = c->left){
+        for(Node* r = c->up; r != c; r = r->up){
+            int ctr = 1;
+            for(Node* n = r->left; n != r; n = n->left){
+                ctr++;
+            }
+            if(ctr != 4){ cout << "row.size() != 4" << endl; }
+        }
+    }
+    cout << "left up ok" << endl;
+}
+
 void cover( Node* n ){
     Node* c = n->col;
     c->right->left = c->left;
     c->left->right = c->right;
 
+    
     for( Node* row = c->down; row != c; row = row->down ){
         for( Node* rightNode = row->right; rightNode != row; rightNode = rightNode->right ){
             rightNode->up->down = rightNode->down;
-            rightNode->down->up = rightNode->up; 
+            rightNode->down->up = rightNode->up;
+            rightNode->col->size--;
         }
     }
 }
@@ -133,14 +168,15 @@ void cover( Node* n ){
 void uncover( Node* n ){
     Node* c = n->col;
     for( Node* row = c->up; row != c; row = row->up){
-        for( Node* leftNode = row->left; leftNode != row; leftNode = leftNode->right){
-            leftNode->up->down = leftNode->down;
-            leftNode->down->up = leftNode->up;
+        for( Node* leftNode = row->left; leftNode != row; leftNode = leftNode->left){
+            leftNode->col->size++;
+            leftNode->up->down = leftNode;
+            leftNode->down->up = leftNode;
         }
     }
 
-    c->right->left = c->left;
-    c->left->right = c->right;
+    c->right->left = c;
+    c->left->right = c;
 }
 
 Node* getSmallest( Node* h){
@@ -156,31 +192,61 @@ Node* getSmallest( Node* h){
         }
     }
 
+    if(min_col == h){ cout << "Error getSmallest: min_col == h" << endl; }
+
     return min_col;
 }
 
-// not done
-search(int k, Node* h){
+void print_sol(){
+    vector<vector<int>> sol(9, vector<int>(9, -1));
+    for(auto s: solution){
+        if(s){
+            sol[s->i][s->j] = s->val;
+        }
+    }
+
+    for(auto s: sol){
+        for(auto ss: s){
+            cout << ss << " ";
+        }
+        cout << endl;
+    }
+}
+
+void search(int k, Node* h){
     if(h->right == h){
+        // found one solution
+        if(sol_ctr++ % 100000 == 0){ 
+            cout << sol_ctr << endl;
+            // print_sol();
+        }
         return;
     }else{
         Node* c = getSmallest(h);
         cover(c);
 
         for( Node* row = c->down; row != c; row = row->down){
+            solution[k] = row;
+
             for( Node* rightNode = row->right; rightNode != row; rightNode = rightNode->right){
-                cover(rightNode->col);
+                cover(rightNode);
             }
+            
 
             search(k+1, h);
-            c = row->col;
-            
+
             for( Node* leftNode = row->left; leftNode != row; leftNode = leftNode->left ){
-                uncover(leftNode->col);
+                uncover(leftNode);
             }
         }
+        uncover(c);
+
+        return;
     }
 }
+
+
+
 int main(){
 
     // Each Cols represents a constraint
@@ -195,6 +261,7 @@ int main(){
     // each row represets a possible number in a cell
     // possible digits
     vector<vector<bool>> grid;
+    vector<vector<int>> easy;
     for(int d=0; d<9; d++){
         for(int r=0; r<9; r++){
             for(int c=0; c<9; c++){
@@ -207,6 +274,8 @@ int main(){
                 if(r == 6 && c == 4 && d!= 0){ continue; }
                 if(r == 7 && c == 5 && d!= 2){ continue; }
                 if(r == 8 && c == 6 && d!= 5){ continue; }
+
+                easy.push_back({r, c, d});
 
                 auto temp = row;
                 // constrain 1
@@ -229,9 +298,10 @@ int main(){
     cout << "cols: " << grid[0].size() << endl; 
     */
 
-    auto l = generate_list(grid);
+    Node* h = generate_list(grid, easy);
+    list_check(h);
 
-    // search
+    search(0, h);
     
     
     return 0;

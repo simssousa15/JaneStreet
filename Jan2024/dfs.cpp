@@ -146,7 +146,7 @@ int main(){
         q.pop();
 
         if(s.is_full()){
-            if(total_solutions % 10000 == 0){
+            if(total_solutions % 100000 == 0){
                 cout << "-----------------" << endl;
                 cout << "Queue size: " << q.size() << endl;
                 cout << "Solutions: " << total_solutions+1 << endl;
