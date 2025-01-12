@@ -14,11 +14,11 @@ Startign Sudoku
 
  ---------------------
  _ _ _ | _ _ _ | _ 2 _
- _ _ _ | _ _ _ | _ _ _
+ _ _ _ | _ _ _ | _ _ 5
  _ 2 _ | _ _ _ | _ _ _
  ---------------------
  _ _ 0 | _ _ _ | _ _ _
- _ _ _ | _ _ _ | _ _ 5
+ _ _ _ | _ _ _ | _ _ _
  _ _ _ | 2 _ _ | _ _ _
  ---------------------
  _ _ _ | _ 0 _ | _ _ _
@@ -39,36 +39,7 @@ class Sudoku{
         int nxt_i=0, nxt_j=0;
         bool full = false;
 
-    public:
-        Sudoku(){
-            vector<bool> l (N, false);
-            vector<int> n(N, -1);
-            for(int i=0; i<9; i++){
-                rows.push_back(l);
-                cols.push_back(l);
-                squares.push_back(l);
-                sudo.push_back(n);
-            }
-
-            // initial values
-            bool init = 
-            insert(0, 7, 2) &&
-            insert(1, 8, 5) &&
-            insert(2, 1, 2) &&
-            insert(3, 2, 0) &&
-            insert(5, 3, 2) &&
-            insert(6, 4, 0) &&
-            insert(7, 5, 2) &&
-            insert(8, 6, 5);   
-
-            if(!init){ cout << "Error with initialization!" << endl; }      
-        }
-
-        bool operator<(const Sudoku& other) const{
-            return (nxt_i * 9 + nxt_j) < (other.nxt_i * 9 + other.nxt_j);
-        }
-
-        bool insert(int i, int j, int val){
+        bool _insert(int i, int j, int val){
             if(rows[i][val]){ return false; }
             else if(cols[j][val]){ return false; }
             else if(squares[i - i%3 + j/3][val]){ return false; }
@@ -83,7 +54,7 @@ class Sudoku{
             }
         }
 
-        void inc_nxt(){
+        void _inc_nxt(){
             while(sudo[nxt_i][nxt_j] != -1){
                 nxt_j++;
                 if(nxt_j == 9){
@@ -97,9 +68,38 @@ class Sudoku{
             }
         }
 
+    public:
+        Sudoku(){
+            vector<bool> l (N, false);
+            vector<int> n(N, -1);
+            for(int i=0; i<9; i++){
+                rows.push_back(l);
+                cols.push_back(l);
+                squares.push_back(l);
+                sudo.push_back(n);
+            }
+
+            // initial values
+            bool init = 
+            _insert(0, 7, 2) &&
+            _insert(1, 8, 5) &&
+            _insert(2, 1, 2) &&
+            _insert(3, 2, 0) &&
+            _insert(5, 3, 2) &&
+            _insert(6, 4, 0) &&
+            _insert(7, 5, 2) &&
+            _insert(8, 6, 5);   
+
+            if(!init){ cout << "Error with initialization!" << endl; }      
+        }
+
+        bool operator<(const Sudoku& other) const{
+            return (nxt_i * 9 + nxt_j) < (other.nxt_i * 9 + other.nxt_j);
+        }
+
         bool insert_nxt(int val){
-            bool b = insert(nxt_i, nxt_j, val);
-            if(b){ inc_nxt(); }
+            bool b = _insert(nxt_i, nxt_j, val);
+            if(b){ _inc_nxt(); }
             return b;
         }
 
@@ -132,26 +132,21 @@ class Sudoku{
 
 int main(){
 
-    time_t start, end;
-    time(&start);
-    ios_base::sync_with_stdio(false);
-
     Sudoku s;
-    priority_queue<Sudoku> q;
+    queue<Sudoku> q;
     q.push(s);
     
     int total_solutions = 0;
     while(q.size()){
-        s = q.top();
+        cout << "Queue size: " << q.size() << endl;
+        s = q.front();
         q.pop();
 
         if(s.is_full()){
-            if(total_solutions % 100000 == 0){
-                cout << "-----------------" << endl;
-                cout << "Queue size: " << q.size() << endl;
-                cout << "Solutions: " << total_solutions+1 << endl;
-                s.printf();
-            }
+            cout << "-----------------" << endl;
+            cout << "Queue size: " << q.size() << endl;
+            cout << "Solutions: " << total_solutions+1 << endl;
+            s.printf();
             total_solutions++;
             continue;;
         }
@@ -163,12 +158,8 @@ int main(){
             }
         }
     }
-    
-    time(&end);
 
     cout << "Total solutions: " << total_solutions << endl;
-    double time_taken = double(end - start);
-    cout << "Total time: " << fixed << time_taken << setprecision(5) << " sec" << endl;
 
     return 0;
 }

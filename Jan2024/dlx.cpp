@@ -4,6 +4,7 @@
 #include <iostream>
 #include <queue>
 #include <bits/stdc++.h>
+#include <chrono>
 
 #define N 9
 
@@ -14,6 +15,7 @@ using namespace std;
     - https://www.ocf.berkeley.edu/~jchu/publicportal/sudoku/sudoku.paper.html
     - https://code.google.com/archive/p/narorumo/wikis/SudokuDLX.wiki
     - https://shivankaul.com/blog/sudoku
+    - https://github.com/ShivanKaul/Sudoku-DLX
 */
 // 1. Find all the solutions to the sudoku (1-9 digits)
 /*
@@ -53,9 +55,104 @@ struct Node
     int i, j, val;
 };
 
-vector<Node*> solution(N*N, nullptr);
-int sol_ctr = 0;
+//vector<Node*> solution(N*N, nullptr);
+class Solution{
+    private:
+        vector<Node*> sol;
+        vector<vector<int>> grid;
+        vector<int> in_row_ctr;
+        long gdc_val = LONG_MAX;
 
+        vector<long> _get_full_rows(){
+            vector<long> full_rows;
+            for(auto row : grid){
+                string num = "";
+                for(auto n : row){
+                    if(n == -1){ break; }
+                    num += to_string(n);
+                }
+                if(num.size() == 9){
+                    full_rows.push_back(stol(num));
+                }
+            }
+            return full_rows;
+        }
+
+    public:
+        Solution(){
+            for(int i=0; i<N*N; i++){ sol.push_back(nullptr); }
+            for(int i=0; i<N; i++){
+                vector<int> temp;
+                for(int j=0; j<N; j++){
+                    temp.push_back(-1);
+                }
+                grid.push_back(temp);
+            }
+            for(int i=0; i<N; i++){ in_row_ctr.push_back(0); }
+        }
+
+        void add(int k, Node* row){
+            grid[row->i][row->j] = row->val;
+            in_row_ctr[row->i]++;
+            sol[k] = row;
+
+            if(in_row_ctr[row->i] == N){
+                if(gdc_val == LONG_MAX){
+                    gdc_val = row->val;
+                }else{
+                    string num = "";
+                    for(auto n : grid[row->i]){
+                        num += to_string(n);
+                    }
+                    gdc_val = __gcd(gdc_val, stol(num));
+                }
+            }
+        }
+
+        void remove(int k){ 
+            grid[sol[k]->i][sol[k]->j] = -1;
+            int this_row_ctr = --in_row_ctr[sol[k]->i];
+            sol[k] = nullptr;
+
+            if(this_row_ctr == 8){
+                gdc_val = LONG_MAX;
+                for(int i=0; i<N; i++){
+                    int cnt = in_row_ctr[i];
+                    if(cnt == 9){
+                        string num = "";
+                        for(auto n : grid[i]){
+                            num += to_string(n);
+                        }
+                        if(gdc_val == LONG_MAX){ gdc_val = stol(num); }
+                        else{ gdc_val = __gcd(gdc_val, stol(num)); }
+                    }
+                }
+            }
+        }
+
+        void printf(){
+            for(auto s: grid){
+                for(auto ss: s){
+                    cout << ss << " ";
+                }
+                cout << endl;
+            }
+        }
+
+        long get_gcd(){
+            return gdc_val;
+        }
+
+        vector<vector<int>> get_grid(){
+            return grid;
+        }   
+};
+
+Solution sol;
+vector<vector<int>> best_grid;
+long best_gcd = 0;
+int small_k = INT_MAX;
+auto last_k = chrono::high_resolution_clock::now();
 
 Node* generate_list(vector<vector<bool>>grid, vector<vector<int>> easy){
     Node* root = new Node();
@@ -197,28 +294,16 @@ Node* getSmallest( Node* h){
     return min_col;
 }
 
-void print_sol(){
-    vector<vector<int>> sol(9, vector<int>(9, -1));
-    for(auto s: solution){
-        if(s){
-            sol[s->i][s->j] = s->val;
-        }
-    }
-
-    for(auto s: sol){
-        for(auto ss: s){
-            cout << ss << " ";
-        }
-        cout << endl;
-    }
-}
-
 void search(int k, Node* h){
     if(h->right == h){
-        // found one solution
-        if(sol_ctr++ % 100000 == 0){ 
-            cout << sol_ctr << endl;
-            // print_sol();
+        int gcd = sol.get_gcd();
+        if(gcd > best_gcd){
+            best_gcd = gcd;
+            best_grid = sol.get_grid();
+            cout << "### Better sol found ###" << endl;
+            cout << best_gcd << endl;
+            sol.printf();
+            cout << "------------------------" << endl;
         }
         return;
     }else{
@@ -226,20 +311,28 @@ void search(int k, Node* h){
         cover(c);
 
         for( Node* row = c->down; row != c; row = row->down){
-            solution[k] = row;
+            sol.add(k, row);
 
             for( Node* rightNode = row->right; rightNode != row; rightNode = rightNode->right){
                 cover(rightNode);
             }
-            
 
-            search(k+1, h);
+            if(sol.get_gcd() > best_gcd){ search(k+1, h); }            
+            sol.remove(k);
 
             for( Node* leftNode = row->left; leftNode != row; leftNode = leftNode->left ){
                 uncover(leftNode);
             }
         }
         uncover(c);
+        
+        if(k < small_k){
+            auto now = chrono::high_resolution_clock::now();
+            auto duration = chrono::duration_cast<chrono::milliseconds>(now - last_k);
+            small_k = k;
+            cout << "k: " << k << "(" << duration.count() << "ms)" << endl;
+            last_k = now;
+        }
 
         return;
     }
