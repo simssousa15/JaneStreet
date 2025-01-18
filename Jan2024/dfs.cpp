@@ -108,7 +108,7 @@ class Sudoku{
         }
 
         void printf(){
-            cout << "########################" << endl;
+            /* cout << "########################" << endl;
             for(auto r : sudo){
                 for(auto c : r){
                     if(c == -1){
@@ -120,7 +120,24 @@ class Sudoku{
                 }
                 cout << endl;
             }
-            cout << "########################" << endl;
+            cout << "########################" << endl; */
+
+            //find positions of 0, 2 5
+            map<int, set<pair<int, int>>> pos;
+            for(int i=0; i<N; i++){
+                for(int j=0; j<N; j++){
+                    pos[sudo[i][j]].insert({i, j});
+                }
+            }
+
+            for(auto p : pos){
+                if(p.first != 2 && p.first != 5 && p.first != 0){ continue; }
+                cout << p.first << ": ";
+                for(auto pp : p.second){
+                    cout << "(" << pp.first << ", " << pp.second << ") ";
+                }
+                cout << endl;
+            }
         }
 
         int get_size(){
@@ -133,19 +150,19 @@ class Sudoku{
 int main(){
 
     Sudoku s;
-    queue<Sudoku> q;
+    priority_queue<Sudoku> q;
     q.push(s);
     
     int total_solutions = 0;
     while(q.size()){
-        cout << "Queue size: " << q.size() << endl;
-        s = q.front();
+        // cout << "Queue size: " << q.size() << endl;
+        s = q.top();
         q.pop();
 
         if(s.is_full()){
             cout << "-----------------" << endl;
-            cout << "Queue size: " << q.size() << endl;
-            cout << "Solutions: " << total_solutions+1 << endl;
+            // cout << "Queue size: " << q.size() << endl;
+            // cout << "Solutions: " << total_solutions+1 << endl;
             s.printf();
             total_solutions++;
             continue;;

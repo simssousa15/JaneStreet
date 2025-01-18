@@ -34,9 +34,28 @@ Startign Sudoku
  _ _ _ | _ _ 2 | _ _ _
  _ _ _ | _ _ _ | 5 _ _
  ---------------------
+
+----------------------
+ _ _ _ | _ _ _ | _ 2 _
+ _ _ _ | _ 2 _ | _ _ 5
+ _ 2 _ | _ _ _ | _ _ _
+ ---------------------
+ _ _ 0 | _ _ _ | _ _ _
+ _ _ _ | _ _ _ | _ _ _
+ _ _ _ | 2 _ _ | _ _ _
+ ---------------------
+ _ _ _ | _ 0 _ | _ _ _
+ _ _ _ | _ _ 2 | _ _ _
+ _ _ _ | _ _ _ | 5 _ _
+ ---------------------
  */
 
+/*
+0: (0, 1) (1, 3) (2, 7) (3, 2) (4, 5) (5, 8) (6, 4) (7, 6) (8, 0) 
+2: (0, 7) (1, 4) (2, 1) (3, 0) (4, 6) (5, 3) (6, 2) (7, 5) (8, 8) 
+5: (0, 2) (1, 8) (2, 5) (3, 7) (4, 1) (5, 4) (6, 0) (7, 3) (8, 6)
 
+*/
 /*
     **** Generate toriodal doubly linked list ****
 */
@@ -55,16 +74,84 @@ struct Node
     int i, j, val;
 };
 
-//vector<Node*> solution(N*N, nullptr);
+// cells with these values can be changed
+vector<int> not_fixed = {1, 3, 4, 6, 7, 8};
+
+int rand_int(int min, int max){
+    return min + (rand() % (max - min + 1));
+}
+
+class MemoGcd{
+    private:
+        unordered_map<string, pair<long, int>> memo;
+        int max_size = 10'000;
+        long long hits = 0;
+        long long total = 0;
+
+        string _concat (vector<string> full_rows){
+            string key = "";
+            for(auto row : full_rows){
+                key += row + ",";
+            }
+            return key;
+        }
+
+    public:
+        // MemoGcd(){ keys.reserve(max_size); }
+
+        pair<long, int> calc(vector<string> full_rows){
+            string key = _concat(full_rows);
+
+            if(memo.find(key) != memo.end()){
+                hits++;
+                return memo[key];
+            }
+            if(memo.size() > max_size){
+                auto itr = memo.begin();
+                advance(itr, rand_int(0, max_size));
+                memo.erase(itr);
+            }
+            total++;
+            if( total%10000 == 0 ){ cout << "Memo Hits: " << (double)hits/total << "%" << endl; }
+
+            long max_gcd = INT_MAX;
+            int missing_val = 9;
+            //compute gcd for grid with default values
+            for(auto row : full_rows){
+                if(max_gcd == INT_MAX){ max_gcd = stol(row); }
+                else{ max_gcd = __gcd(max_gcd, stol(row)); }
+            }
+
+            //try to change the values of the grid to improve the gcd
+            for(auto n : not_fixed){
+                long new_gcd = INT_MIN;
+                for(auto row : full_rows){
+                    string num = row;
+                    for(auto &c : num){ c == n + '0' ? c='9' : c=c; }
+                    if(new_gcd == INT_MIN){ new_gcd = stol(num); }
+                    else{ new_gcd = __gcd(new_gcd, stol(num)); }
+                }
+                if(new_gcd > max_gcd){
+                    max_gcd = new_gcd;
+                    missing_val = n;
+                }
+            }
+
+            memo[key] = {max_gcd, missing_val};
+            return {max_gcd, missing_val};
+        }
+};
+
 class Solution{
     private:
         vector<Node*> sol;
         vector<vector<int>> grid;
         vector<int> in_row_ctr;
-        long gdc_val = LONG_MAX;
+        int missing_val = 9;
+        MemoGcd gcd = MemoGcd();
 
-        vector<long> _get_full_rows(){
-            vector<long> full_rows;
+        vector<string> _get_full_rows(){
+            vector<string> full_rows;
             for(auto row : grid){
                 string num = "";
                 for(auto n : row){
@@ -72,7 +159,7 @@ class Solution{
                     num += to_string(n);
                 }
                 if(num.size() == 9){
-                    full_rows.push_back(stol(num));
+                    full_rows.push_back(num);
                 }
             }
             return full_rows;
@@ -95,52 +182,33 @@ class Solution{
             grid[row->i][row->j] = row->val;
             in_row_ctr[row->i]++;
             sol[k] = row;
-
-            if(in_row_ctr[row->i] == N){
-                if(gdc_val == LONG_MAX){
-                    gdc_val = row->val;
-                }else{
-                    string num = "";
-                    for(auto n : grid[row->i]){
-                        num += to_string(n);
-                    }
-                    gdc_val = __gcd(gdc_val, stol(num));
-                }
-            }
         }
 
         void remove(int k){ 
             grid[sol[k]->i][sol[k]->j] = -1;
             int this_row_ctr = --in_row_ctr[sol[k]->i];
             sol[k] = nullptr;
-
-            if(this_row_ctr == 8){
-                gdc_val = LONG_MAX;
-                for(int i=0; i<N; i++){
-                    int cnt = in_row_ctr[i];
-                    if(cnt == 9){
-                        string num = "";
-                        for(auto n : grid[i]){
-                            num += to_string(n);
-                        }
-                        if(gdc_val == LONG_MAX){ gdc_val = stol(num); }
-                        else{ gdc_val = __gcd(gdc_val, stol(num)); }
-                    }
-                }
-            }
         }
 
         void printf(){
             for(auto s: grid){
                 for(auto ss: s){
-                    cout << ss << " ";
+                    if(ss == missing_val){ cout << "9"; }
+                    else{ cout << ss; }
                 }
                 cout << endl;
             }
         }
 
         long get_gcd(){
-            return gdc_val;
+
+            vector<string> full_rows = _get_full_rows();
+            if(full_rows.size() == 0){ return INT_MAX; }
+            if(full_rows.size() == 1){ return stol(full_rows[0]); }
+
+            auto g = gcd.calc(full_rows);
+            missing_val = g.second;
+            return g.first;
         }
 
         vector<vector<int>> get_grid(){
@@ -152,7 +220,8 @@ Solution sol;
 vector<vector<int>> best_grid;
 long best_gcd = 0;
 int small_k = INT_MAX;
-auto last_k = chrono::high_resolution_clock::now();
+auto start_time = chrono::high_resolution_clock::now();
+auto last_k = start_time;
 
 Node* generate_list(vector<vector<bool>>grid, vector<vector<int>> easy){
     Node* root = new Node();
@@ -296,7 +365,7 @@ Node* getSmallest( Node* h){
 
 void search(int k, Node* h){
     if(h->right == h){
-        int gcd = sol.get_gcd();
+        /* int gcd = sol.get_gcd();
         if(gcd > best_gcd){
             best_gcd = gcd;
             best_grid = sol.get_grid();
@@ -304,7 +373,7 @@ void search(int k, Node* h){
             cout << best_gcd << endl;
             sol.printf();
             cout << "------------------------" << endl;
-        }
+        } */
         return;
     }else{
         Node* c = getSmallest(h);
@@ -317,7 +386,8 @@ void search(int k, Node* h){
                 cover(rightNode);
             }
 
-            if(sol.get_gcd() > best_gcd){ search(k+1, h); }            
+            // if(sol.get_gcd() > best_gcd){ search(k+1, h); }
+            search(k+1, h);       
             sol.remove(k);
 
             for( Node* leftNode = row->left; leftNode != row; leftNode = leftNode->left ){
@@ -328,9 +398,10 @@ void search(int k, Node* h){
         
         if(k < small_k){
             auto now = chrono::high_resolution_clock::now();
-            auto duration = chrono::duration_cast<chrono::milliseconds>(now - last_k);
+            auto duration = chrono::duration_cast<chrono::seconds>(now - last_k);
+            auto total_duration = chrono::duration_cast<chrono::seconds>(now - start_time);
             small_k = k;
-            cout << "k: " << k << "(" << duration.count() << "ms)" << endl;
+            cout << "k: " << k << " diff: " << duration.count() << "s" << " total: " << total_duration.count() << "s" <<  endl;
             last_k = now;
         }
 
@@ -367,6 +438,8 @@ int main(){
                 if(r == 6 && c == 4 && d!= 0){ continue; }
                 if(r == 7 && c == 5 && d!= 2){ continue; }
                 if(r == 8 && c == 6 && d!= 5){ continue; }
+                //forced assignments
+                if(r == 1 && c == 4 && d!= 2){ continue; }
 
                 easy.push_back({r, c, d});
 
