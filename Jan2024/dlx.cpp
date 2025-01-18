@@ -75,7 +75,7 @@ struct Node
 };
 
 // cells with these values can be changed
-vector<int> not_fixed = {1, 3, 4, 6, 7, 8};
+vector<int> not_fixed = {9, 1, 3, 4, 6, 7, 8};
 
 int rand_int(int min, int max){
     return min + (rand() % (max - min + 1));
@@ -83,8 +83,8 @@ int rand_int(int min, int max){
 
 class MemoGcd{
     private:
-        unordered_map<string, pair<long, int>> memo;
-        int max_size = 10'000;
+        unordered_map<string, pair<long,int>> memo;
+        int max_size = 1'000'000;
         long long hits = 0;
         long long total = 0;
 
@@ -97,37 +97,39 @@ class MemoGcd{
         }
 
     public:
-        // MemoGcd(){ keys.reserve(max_size); }
-
+        
         pair<long, int> calc(vector<string> full_rows){
             string key = _concat(full_rows);
+            total++;
 
             if(memo.find(key) != memo.end()){
                 hits++;
                 return memo[key];
             }
-            if(memo.size() > max_size){
+            if(memo.size() >= max_size){
                 auto itr = memo.begin();
                 advance(itr, rand_int(0, max_size));
                 memo.erase(itr);
             }
-            total++;
-            if( total%10000 == 0 ){ cout << "Memo Hits: " << (double)hits/total << "%" << endl; }
-
-            long max_gcd = INT_MAX;
-            int missing_val = 9;
-            //compute gcd for grid with default values
-            for(auto row : full_rows){
-                if(max_gcd == INT_MAX){ max_gcd = stol(row); }
-                else{ max_gcd = __gcd(max_gcd, stol(row)); }
+            if( total%100'000 == 0 ){ 
+                cout << "Memo Hits: " << (double)hits/total * 100 << "%" << endl;
+                cout << "  Storage: " << (double)memo.size()/max_size * 100 << "%" << endl;
             }
+
+            long max_gcd = 0;
+            int missing_val = 9;
 
             //try to change the values of the grid to improve the gcd
             for(auto n : not_fixed){
                 long new_gcd = INT_MIN;
                 for(auto row : full_rows){
                     string num = row;
-                    for(auto &c : num){ c == n + '0' ? c='9' : c=c; }
+                    for(int i = 0; i < num.size(); i++){
+                        if(num[i] == '0' + n){
+                            num[i] = '9';
+                            break;
+                        }
+                    }
                     if(new_gcd == INT_MIN){ new_gcd = stol(num); }
                     else{ new_gcd = __gcd(new_gcd, stol(num)); }
                 }
@@ -146,7 +148,7 @@ class Solution{
     private:
         vector<Node*> sol;
         vector<vector<int>> grid;
-        vector<int> in_row_ctr;
+        vector<int> row_ctr = {0, 0, 0, 0, 0, 0, 0, 0, 0};
         int missing_val = 9;
         MemoGcd gcd = MemoGcd();
 
@@ -175,19 +177,21 @@ class Solution{
                 }
                 grid.push_back(temp);
             }
-            for(int i=0; i<N; i++){ in_row_ctr.push_back(0); }
         }
 
-        void add(int k, Node* row){
+        bool add(int k, Node* row){
             grid[row->i][row->j] = row->val;
-            in_row_ctr[row->i]++;
             sol[k] = row;
+            row_ctr[row->i]++;
+            return row_ctr[row->i] == 9;
         }
 
-        void remove(int k){ 
+        bool remove(int k){
             grid[sol[k]->i][sol[k]->j] = -1;
-            int this_row_ctr = --in_row_ctr[sol[k]->i];
+            row_ctr[sol[k]->i]--;
+            bool ret = row_ctr[sol[k]->i] == 8;
             sol[k] = nullptr;
+            return ret;
         }
 
         void printf(){
@@ -365,7 +369,7 @@ Node* getSmallest( Node* h){
 
 void search(int k, Node* h){
     if(h->right == h){
-        /* int gcd = sol.get_gcd();
+        int gcd = sol.get_gcd();
         if(gcd > best_gcd){
             best_gcd = gcd;
             best_grid = sol.get_grid();
@@ -373,26 +377,32 @@ void search(int k, Node* h){
             cout << best_gcd << endl;
             sol.printf();
             cout << "------------------------" << endl;
-        } */
+        }
         return;
     }else{
         Node* c = getSmallest(h);
         cover(c);
 
         for( Node* row = c->down; row != c; row = row->down){
-            sol.add(k, row);
-
-            for( Node* rightNode = row->right; rightNode != row; rightNode = rightNode->right){
-                cover(rightNode);
+            bool need_to_gcd = sol.add(k, row);
+            int gcd = INT_MAX;
+            if(need_to_gcd){
+                gcd = sol.get_gcd();
             }
 
-            // if(sol.get_gcd() > best_gcd){ search(k+1, h); }
-            search(k+1, h);       
+            if(gcd > best_gcd){
+                for( Node* rightNode = row->right; rightNode != row; rightNode = rightNode->right){
+                    cover(rightNode);
+                }
+
+                search(k+1, h);
+
+                for( Node* leftNode = row->left; leftNode != row; leftNode = leftNode->left ){
+                    uncover(leftNode);
+                }
+            }
+            
             sol.remove(k);
-
-            for( Node* leftNode = row->left; leftNode != row; leftNode = leftNode->left ){
-                uncover(leftNode);
-            }
         }
         uncover(c);
         

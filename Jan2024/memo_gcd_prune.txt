@@ -1,0 +1,101 @@
+start list check...
+right down ok
+left up ok
+### Better sol found ###
+9
+105346728
+678021345
+324785106
+280174653
+753860214
+416253870
+532607481
+841532067
+067418532
+------------------------
+k: 80 diff: 0s total: 0s
+k: 79 diff: 0s total: 0s
+k: 78 diff: 0s total: 0s
+k: 77 diff: 0s total: 0s
+k: 76 diff: 0s total: 0s
+k: 75 diff: 0s total: 0s
+k: 74 diff: 0s total: 0s
+k: 73 diff: 0s total: 0s
+k: 72 diff: 0s total: 0s
+k: 71 diff: 0s total: 0s
+k: 70 diff: 0s total: 0s
+k: 69 diff: 0s total: 0s
+k: 68 diff: 0s total: 0s
+k: 67 diff: 0s total: 0s
+k: 66 diff: 0s total: 0s
+k: 65 diff: 0s total: 0s
+k: 64 diff: 0s total: 0s
+k: 63 diff: 0s total: 0s
+k: 62 diff: 0s total: 0s
+k: 61 diff: 0s total: 0s
+k: 60 diff: 0s total: 0s
+k: 59 diff: 0s total: 0s
+k: 58 diff: 0s total: 0s
+k: 57 diff: 0s total: 0s
+k: 56 diff: 0s total: 0s
+k: 55 diff: 0s total: 0s
+k: 54 diff: 0s total: 0s
+k: 53 diff: 0s total: 0s
+k: 52 diff: 0s total: 0s
+k: 51 diff: 0s total: 0s
+k: 50 diff: 0s total: 0s
+k: 49 diff: 0s total: 0s
+k: 48 diff: 0s total: 0s
+k: 47 diff: 0s total: 0s
+k: 46 diff: 0s total: 0s
+k: 45 diff: 0s total: 0s
+k: 44 diff: 0s total: 0s
+k: 43 diff: 0s total: 0s
+k: 42 diff: 0s total: 0s
+k: 41 diff: 0s total: 0s
+k: 40 diff: 0s total: 0s
+### Better sol found ###
+27
+105347628
+687021345
+324865107
+270138456
+856470213
+413256870
+532604781
+761582034
+048713562
+------------------------
+k: 39 diff: 0s total: 0s
+k: 38 diff: 0s total: 0s
+k: 37 diff: 0s total: 0s
+k: 36 diff: 1s total: 1s
+k: 35 diff: 0s total: 1s
+k: 34 diff: 0s total: 1s
+k: 33 diff: 0s total: 1s
+Memo Hits: 93.8036%
+Storage:   17.3498%
+Memo Hits: 93.9946%
+Storage:   20.4182%
+k: 32 diff: 10s total: 12s
+k: 31 diff: 11s total: 23s
+Memo Hits: 97.2752%
+Storage:   50.137%
+Memo Hits: 97.2671%
+Storage:   53.0174%
+Memo Hits: 97.2921%
+Storage:   54.4291%
+k: 30 diff: 48s total: 72s
+### Better sol found ###
+81
+105786324
+843021675
+627435801
+280314756
+351670248
+476258130
+512803467
+768542013
+034167582
+------------------------
+k: 29 diff: 61s total: 133s
